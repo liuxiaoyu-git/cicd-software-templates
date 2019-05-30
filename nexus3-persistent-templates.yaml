@@ -58,7 +58,7 @@ objects:
               - "/bin/bash"
               - "-c"
               - "curl -o /tmp/nexus-functions -s https://raw.githubusercontent.com/chengkuangan/DevOpsDemo/master/bin/setup_nexus3.sh; source /tmp/nexus-functions admin admin123 http://${APPLICATION_NAME}:8081"
-      type: Rolling
+      type: Recreate
     template:
       metadata:
         labels:
