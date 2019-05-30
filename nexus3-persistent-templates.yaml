@@ -161,7 +161,7 @@ parameters:
   displayName: Sonatype Nexus version
   name: NEXUS_VERSION
   required: true
-  value: "3.2.1"
+  value: "3.6.0"
 - name: NEXUS_LIMIT_CPU
   displayName: Nexus CPU Resource Limit
   description: Nexus container resource limit for CPU
