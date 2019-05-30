@@ -289,8 +289,8 @@ objects:
       ROOT = /opt/gogs/data/repositories
 
       [server]
-      ROOT_URL=http://${HOSTNAME}
-      SSH_DOMAIN=${HOSTNAME}
+      ROOT_URL=http://${APPLICATION_NAME}-${PROJECT_NAME}-${HOSTNAME}
+      SSH_DOMAIN=${APPLICATION_NAME}-${PROJECT_NAME}-${HOSTNAME}
 
       [security]
       INSTALL_LOCK = ${INSTALL_LOCK}
@@ -382,3 +382,8 @@ parameters:
   displayName: PostgreSQL Memory Resource Request Limit
   description: PostgreSQL container resource request limit for memory              
   value: "50Mi"
+- name: PROJECT_NAME
+  displayName: Project Name
+  description: Project Name
+  value: "tools"
+
