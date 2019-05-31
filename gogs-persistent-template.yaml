@@ -135,7 +135,7 @@ objects:
       app: ${APPLICATION_NAME}
     name: ${APPLICATION_NAME}
   spec:
-    host: ${HOSTNAME}
+    host: ${APPLICATION_NAME}-${PROJECT_NAME}-${HOSTNAME}
     to:
       name: ${APPLICATION_NAME}
 - kind: DeploymentConfig
