@@ -135,7 +135,7 @@ objects:
       app: ${APPLICATION_NAME}
     name: ${APPLICATION_NAME}
   spec:
-    host: ${APPLICATION_NAME}-${PROJECT_NAME}-${HOSTNAME}
+    host: ${HOSTNAME}
     to:
       name: ${APPLICATION_NAME}
 - kind: DeploymentConfig
@@ -289,8 +289,8 @@ objects:
       ROOT = /opt/gogs/data/repositories
 
       [server]
-      ROOT_URL=http://${APPLICATION_NAME}-${PROJECT_NAME}-${HOSTNAME}
-      SSH_DOMAIN=${APPLICATION_NAME}-${PROJECT_NAME}-${HOSTNAME}
+      ROOT_URL=${HOSTNAME}
+      SSH_DOMAIN=${HOSTNAME}
 
       [security]
       INSTALL_LOCK = ${INSTALL_LOCK}
@@ -340,7 +340,7 @@ parameters:
 - name: GOGS_VERSION
   displayName: Gogs Version
   description: 'Version of the Gogs container image to be used (check the available version https://hub.docker.com/r/openshiftdemos/gogs/tags)'
-  value: "0.9.97"
+  value: "0.11.4"
   required: true
 - name: INSTALL_LOCK
   displayName: Installation lock
@@ -382,8 +382,3 @@ parameters:
   displayName: PostgreSQL Memory Resource Request Limit
   description: PostgreSQL container resource request limit for memory              
   value: "50Mi"
-- name: PROJECT_NAME
-  displayName: Project Name
-  description: Project Name
-  value: "tools"
-
