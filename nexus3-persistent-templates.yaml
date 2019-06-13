@@ -50,14 +50,6 @@ objects:
         maxUnavailable: 25%
         timeoutSeconds: 600
         updatePeriodSeconds: 1
-        post:
-          failurePolicy: Abort
-          execNewPod:
-            containerName: ${APPLICATION_NAME}
-            command:
-              - "/bin/bash"
-              - "-c"
-              - "curl -o /tmp/nexus-functions -s https://raw.githubusercontent.com/chengkuangan/scripts/master/configure_nexus3_repo.sh ; source /tmp/nexus-functions admin admin123 http://${APPLICATION_NAME}:8081"
       type: Recreate
     template:
       metadata:
