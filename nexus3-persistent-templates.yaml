@@ -165,7 +165,7 @@ parameters:
 - name:	NEXUS_LIMIT_MEM
   displayName: Nexus Memory Resource Limit         	              
   description: Nexus container resource limit for memory                   
-  value: "2Gi"
+  value: "3Gi"
 - name:	NEXUS_REQUEST_MEM
   displayName: Nexus Memory Resource Request Limit         	              
   description: Nexus container resource request limit for memory                   
