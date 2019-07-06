@@ -102,7 +102,27 @@ objects:
           namespace: openshift
       type: ImageChange
     - type: ConfigChange
-        
+- kind: Service
+  metadata:
+    annotations:
+      description: The Gogs Server's SSH port
+    labels:
+      app: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}-ssh
+  spec:
+    externalTrafficPolicy: Cluster
+    ports:
+    - name: 1025-tcp
+      port: 1025
+      protocol: TCP
+      targetPort: 1025
+    selector:
+      app: ${APPLICATION_NAME}
+      deploymentconfig: ${APPLICATION_NAME}
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}        
 - kind: Service
   apiVersion: v1
   metadata:
@@ -291,6 +311,9 @@ objects:
       [server]
       ROOT_URL=${HOSTNAME}
       SSH_DOMAIN=${HOSTNAME}
+      START_SSH_SERVER = true
+      SSH_PORT = 1025
+      SSH_LISTEN_HOST = 0.0.0.0
 
       [security]
       INSTALL_LOCK = ${INSTALL_LOCK}
@@ -340,7 +363,7 @@ parameters:
 - name: GOGS_VERSION
   displayName: Gogs Version
   description: 'Version of the Gogs container image to be used (check the available version https://hub.docker.com/r/openshiftdemos/gogs/tags)'
-  value: "0.11.4"
+  value: "latest"
   required: true
 - name: INSTALL_LOCK
   displayName: Installation lock
