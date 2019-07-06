@@ -103,6 +103,7 @@ objects:
       type: ImageChange
     - type: ConfigChange
 - kind: Service
+  apiVersion: v1
   metadata:
     annotations:
       description: The Gogs Server's SSH port
