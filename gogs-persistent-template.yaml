@@ -19,6 +19,8 @@ objects:
     annotations:
       description: Exposes the database server
     name: ${APPLICATION_NAME}-postgresql
+    labels:
+      app: ${APPLICATION_NAME}
   spec:
     ports:
     - name: postgresql
@@ -32,6 +34,8 @@ objects:
     annotations:
       description: Defines how to deploy the database
     name: ${APPLICATION_NAME}-postgresql
+    labels:
+      app: ${APPLICATION_NAME}
   spec:
     replicas: 1
     selector:
@@ -65,6 +69,8 @@ objects:
             tcpSocket:
               port: 5432
             timeoutSeconds: 1
+            failureThreshold: 10
+            periodSeconds: 20
           name: postgresql
           ports:
           - containerPort: 5432
@@ -75,18 +81,15 @@ objects:
               - -i
               - -c
               - psql -h 127.0.0.1 -U ${POSTGRESQL_USER} -q -d ${POSTGRESQL_DATABASE} -c 'SELECT 1'
-            initialDelaySeconds: 5
+            initialDelaySeconds: 30
             timeoutSeconds: 1
+            failureThreshold: 10
+          resources:
+            limits:
+              memory: 512Mi
           volumeMounts:
           - mountPath: /var/lib/pgsql/data
             name: gogs-postgres-data
-          resources:
-            limits:
-              cpu: ${POSTGRESQL_LIMIT_CPU}
-              memory: ${POSTGRESQL_LIMIT_MEM}
-            requests:
-              cpu: ${POSTGRESQL_REQUEST_CPU}
-              memory: ${POSTGRESQL_REQUEST_MEM}
         volumes:
         - name: gogs-postgres-data
           persistentVolumeClaim:
@@ -98,7 +101,7 @@ objects:
         - postgresql
         from:
           kind: ImageStreamTag
-          name: postgresql:9.5
+          name: postgresql-96-rhel7:${DATABASE_VERSION}
           namespace: openshift
       type: ImageChange
     - type: ConfigChange
@@ -106,30 +109,7 @@ objects:
   apiVersion: v1
   metadata:
     annotations:
-      description: The Gogs Server's SSH port
-    labels:
-      app: ${APPLICATION_NAME}
-    name: ${APPLICATION_NAME}-ssh
-  spec:
-    externalTrafficPolicy: Cluster
-    ports:
-    - name: 1025-tcp
-      port: 1025
-      protocol: TCP
-      targetPort: 1025
-    selector:
-      app: ${APPLICATION_NAME}
-      deploymentconfig: ${APPLICATION_NAME}
-    sessionAffinity: None
-    type: NodePort
-  status:
-    loadBalancer: {}        
-- kind: Service
-  apiVersion: v1
-  metadata:
-    annotations:
       description: The Gogs server's http port
-      service.alpha.openshift.io/dependencies: '[{"name":"${APPLICATION_NAME}-postgresql","namespace":"","kind":"Service"}]'
     labels:
       app: ${APPLICATION_NAME}
     name: ${APPLICATION_NAME}
@@ -206,28 +186,21 @@ objects:
                 path: /
                 port: 3000
                 scheme: HTTP
-              initialDelaySeconds: 3
+              initialDelaySeconds: 40
               timeoutSeconds: 1
               periodSeconds: 20
               successThreshold: 1
-              failureThreshold: 3
+              failureThreshold: 10
           livenessProbe:
               httpGet:
                 path: /
                 port: 3000
                 scheme: HTTP
-              initialDelaySeconds: 3
+              initialDelaySeconds: 40
               timeoutSeconds: 1
               periodSeconds: 10
               successThreshold: 1
-              failureThreshold: 3
-          resources:
-            limits:
-              cpu: ${GOGS_LIMIT_CPU}
-              memory: ${GOGS_LIMIT_MEM}
-            requests:
-              cpu: ${GOGS_REQUEST_CPU}
-              memory: ${GOGS_REQUEST_MEM}
+              failureThreshold: 10
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         securityContext: {}
@@ -264,7 +237,7 @@ objects:
     - name: "${GOGS_VERSION}"
       from:
         kind: DockerImage
-        name: docker.io/openshiftdemos/gogs:${GOGS_VERSION}
+        name: docker.io/chengkuan/gogs:${GOGS_VERSION}
       importPolicy: {}
       annotations:
         description: The Gogs git server docker image
@@ -274,6 +247,8 @@ objects:
   apiVersion: v1
   metadata:
     name: gogs-data
+    labels:
+      app: ${APPLICATION_NAME}
   spec:
     accessModes:
       - ReadWriteOnce
@@ -284,6 +259,8 @@ objects:
   apiVersion: v1
   metadata:
     name: gogs-postgres-data
+    labels:
+      app: ${APPLICATION_NAME}
   spec:
     accessModes:
       - ReadWriteOnce
@@ -294,6 +271,8 @@ objects:
   apiVersion: v1
   metadata:
     name: gogs-config
+    labels:
+      app: ${APPLICATION_NAME}
   data:
     app.ini: |
       RUN_MODE = prod
@@ -310,11 +289,8 @@ objects:
       ROOT = /opt/gogs/data/repositories
 
       [server]
-      ROOT_URL=${HOSTNAME}
+      ROOT_URL=http://${HOSTNAME}
       SSH_DOMAIN=${HOSTNAME}
-      START_SSH_SERVER = true
-      SSH_PORT = 1025
-      SSH_LISTEN_HOST = 0.0.0.0
 
       [security]
       INSTALL_LOCK = ${INSTALL_LOCK}
@@ -331,7 +307,7 @@ parameters:
   value: gogs
 - description: 'Custom hostname for http service route.  Leave blank for default hostname, e.g.: <application-name>-<project>.<default-domain-suffix>'
   name: HOSTNAME
-  required: false
+  required: true
 - description: Volume space available for data, e.g. 512Mi, 2Gi
   name: GOGS_VOLUME_CAPACITY
   required: true
@@ -339,7 +315,7 @@ parameters:
 - description: Volume space available for postregs data, e.g. 512Mi, 2Gi
   name: DB_VOLUME_CAPACITY
   required: true
-  value: 5Gi
+  value: 1Gi
 - displayName: Database Username
   from: gogs
   value: gogs
@@ -361,6 +337,9 @@ parameters:
 - displayName: Shared Buffer Amount
   name: DATABASE_SHARED_BUFFERS
   value: 12MB
+- displayName: Database version (PostgreSQL)
+  name: DATABASE_VERSION
+  value: "latest"
 - name: GOGS_VERSION
   displayName: Gogs Version
   description: 'Version of the Gogs container image to be used (check the available version https://hub.docker.com/r/openshiftdemos/gogs/tags)'
@@ -373,36 +352,4 @@ parameters:
 - name: SKIP_TLS_VERIFY
   displayName: Skip TLS verification on webhooks
   description: Skip TLS verification on webhooks. Enable with caution!
-  value: "false"
-- name: GOGS_LIMIT_CPU
-  displayName: Gogs CPU Resource Limit
-  description: Gogs container resource limit for CPU
-  value: "150m"
-- name:	GOGS_REQUEST_CPU
-  displayName: Gogs CPU Resource Request Limit         	              
-  description: Gogs container resource request limit for CPU                   
-  value: "50m"
-- name:	GOGS_LIMIT_MEM
-  displayName: Gogs Memory Resource Limit         	              
-  description: Gogs container resource limit for memory                   
-  value: "150Mi"
-- name:	GOGS_REQUEST_MEM
-  displayName: Gogs Memory Resource Request Limit         	              
-  description: Gogs container resource request limit for memory                   
-  value: "50Mi"
-- name:	POSTGRESQL_LIMIT_CPU
-  displayName: PostgreSQL CPU Resource Limit         	              
-  description: PostgreSQL container resource limit for CPU                                 
-  value: "150m"
-- name: POSTGRESQL_REQUEST_CPU
-  displayName: PostgreSQL CPU Resource Request Limit
-  description: PostgreSQL container resource request limit for CPU              
-  value: "50m"
-- name: POSTGRESQL_LIMIT_MEM
-  displayName: PostgreSQL Memory Resource Limit
-  description: PostgreSQL container resource limit for memory              
-  value: "150Mi"
-- name: POSTGRESQL_REQUEST_MEM
-  displayName: PostgreSQL Memory Resource Request Limit
-  description: PostgreSQL container resource request limit for memory              
-  value: "50Mi"
+  value: "true"
