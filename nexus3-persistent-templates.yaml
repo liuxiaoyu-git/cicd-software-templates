@@ -144,7 +144,7 @@ parameters:
 - description: The exposed route/host name
   name: NEXUS_VOLUME_CAPACITY
   required: true
-  value: 5Gi
+  value: 50Gi
 - description: The name for the application.
   name: APPLICATION_NAME
   required: true
@@ -153,20 +153,20 @@ parameters:
   displayName: Sonatype Nexus version
   name: NEXUS_VERSION
   required: true
-  value: "3.6.0"
+  value: "latest"
 - name: NEXUS_LIMIT_CPU
   displayName: Nexus CPU Resource Limit
   description: Nexus container resource limit for CPU
-  value: "600m"
+  value: "2"
 - name:	NEXUS_REQUEST_CPU
   displayName: Nexus CPU Resource Request Limit         	              
   description: Nexus container resource request limit for CPU                   
-  value: "50m"
+  value: "500m"
 - name:	NEXUS_LIMIT_MEM
   displayName: Nexus Memory Resource Limit         	              
   description: Nexus container resource limit for memory                   
-  value: "3Gi"
+  value: "4Gi"
 - name:	NEXUS_REQUEST_MEM
   displayName: Nexus Memory Resource Request Limit         	              
   description: Nexus container resource request limit for memory                   
-  value: "50Mi"
+  value: "500Mi"
